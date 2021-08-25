@@ -1,0 +1,49 @@
+/**
+ * Stripe Subscriptions plugin for Craft CMS
+ *
+ * Stripe Subscriptions CSS
+ *
+ * @author    The Fold
+ * @copyright Copyright (c) 2017 The Fold
+ * @link      http://thefold.co.nz
+ * @package   StripeSubscriptions
+ * @since     1.0.0
+ */
+
+ .stripesubscriptions-type,
+ .stripesubscriptions-status,
+ .stripesubscriptions-mode {
+	display: inline-block;
+	border-radius: 4px;
+	padding: 2px 5px;
+	text-transform: uppercase;
+	font-weight: bold;
+	color: white;
+	font-size: 10px;
+	background-color: #999999;
+ }
+
+ .stripesubscriptions-status--active,
+ .stripesubscriptions-status--succeeded,
+ .stripesubscriptions-type--success,
+ .stripesubscriptions-mode--live {
+	background-color: #27AE60;
+ }
+
+ .stripesubscriptions-status--past_due,
+ .stripesubscriptions-mode--test {
+	background-color: #F1C40E;
+ }
+
+ .stripesubscriptions-type--api {
+	background-color: #2980b9;
+ }
+
+ .stripesubscriptions-type--error,
+ .stripesubscriptions-status--failed {
+	background-color: #D0021B;
+ }
+
+ .stripesubscriptions-label {
+	 font-weight: bold;
+ }
