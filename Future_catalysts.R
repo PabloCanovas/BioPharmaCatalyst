@@ -44,3 +44,4 @@ anti_join(df_previous, df, by = c("ticker", "catalyst_date")) %>%
   I() %>% 
   head(20)
 
+ 
