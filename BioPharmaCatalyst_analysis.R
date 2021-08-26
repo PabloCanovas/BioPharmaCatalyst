@@ -4,6 +4,13 @@ rm(list=ls())
 ####### BIOPHARMA CATALYSTS #########
 #####################################
 
+## Primeras conclusiones:
+# En los archivos históricos aparecen catalizadores a pasado (con catalizador previo a la fecha de la foto del historico)
+# Tambien he visto un caso de desaparición de datos (CERC fue deslistada?)
+# Los catalizadores no siempre ocurren en la fecha prevista: Ejemplo ASND adelantó un mes 25sept -> 25 agosto la PDUFA (resultado: aprobado) respecto a la fecha que aparecia en BPC.
+# Por todo ello, tenemos gaps de precio los días de la noticia sin run-up que acompañe, pues en muchos casos la fecha del catalizador solo se sabe a posteriori. Al buscar run-ups en los archivos históricos encontraremos información que sabíamos en ese momento e información añadida a pasado.
+
+
 library(tidyverse)
 setwd("~/RWork/Trading/BioPharmaCatalyst")
 V <- View
@@ -19,7 +26,7 @@ df_orig <- fst::read_fst("../AlgoTrading/Input/all_data_20210823.fst") %>%
 
 ### Historical FDA data ---------------------------------------------------------------
 
-fda_hist <- read_html("HTMLs/20210824_Historical Biotech Catalyst Calendar • BioPharmCatalyst.html") 
+fda_hist <- read_html("HTMLs/20210826_Historical Biotech Catalyst Calendar • BioPharmCatalyst.html") 
 
 headers <- fda_hist %>% 
   html_element(xpath = '//*[@id="modern-screener-container"]/div/form/div[2]/div[2]/table/thead') %>% 
@@ -51,6 +58,21 @@ fda_hist <- hist_orig %>%
   arrange(catalyst_date)
 
 rm(catalysts, dates_catalyst, description_catalyst)
+
+# fda_hist_previous <- fda_hist
+
+## Compare with previous data ---------------------------------------
+
+# Registros que han aparecido
+anti_join(fda_hist, fda_hist_previous, by = c("ticker", "catalyst_date")) %>%
+  head(20)
+
+# Registros que han desaparecido
+anti_join(fda_hist_previous, fda_hist, by = c("ticker", "catalyst_date")) %>%
+  head(20)
+
+
+
 
 
 # Cogemos los 90 días previos al catalizador y los 30 posteriores.

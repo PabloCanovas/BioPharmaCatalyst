@@ -1,56 +1,46 @@
 
 library(tidyverse)
 library(rvest)
+library(lubridate)
+library(glue)
+
 setwd("~/RWork/Trading/BioPharmaCatalyst")
+source("Get_FDA_Calendar.R")
 V <- View
 
+date <- 20210825
+date <- today()
 
-# fda_calendar <- read_html("HTMLs/FDA Calendar of Biotech Stock Catalysts • BioPharmCatalyst.html")
-fda_calendar <- read_html("HTMLs/20210823_FDA Calendar of Biotech Stock Catalysts • BioPharmCatalyst.html") 
-fda_calendar <- read_html("HTMLs/20210824_FDA Calendar of Biotech Stock Catalysts • BioPharmCatalyst.html") 
-fda_calendar <- read_html("HTMLs/20210825_FDA Calendar of Biotech Stock Catalysts • BioPharmCatalyst.html") 
+df <- Get_FDA_Calendar(date)
 
-headers <- fda_calendar %>% 
-  html_element(xpath = '//*[@id="modern-screener-container"]/div/form/div[2]/div[2]/table/thead') %>% 
-  html_table() %>% 
-  names()
+# df %>% nrow()
+# df %>% filter(!is.na(days_to_catalyst)) %>% nrow()
 
-df_orig <- fda_calendar %>% 
-  html_element(xpath = '//*[@id="modern-screener-container"]/div/form/div[2]/div[2]/table/tbody') %>% 
-  html_table() %>%
-  set_names(headers) 
+df %>% filter(last_updated == max(last_updated))
 
-tickers <- df_orig$Ticker %>% 
-  str_split(pattern = "  ", simplify = T) %>%
-  .[,1] %>%
-  str_replace(pattern = "\n", replacement = "")
-
-catalysts <- df_orig$Catalyst %>% str_split(pattern = "               ", simplify = T) 
-dates_catalyst <- catalysts[,1] %>% str_replace("\n", "")
-description_catalyst <- catalysts[,2]
+df %>% filter(days_to_catalyst <= 25, market_cap_mill <= 2000) %>% V
 
 
-df <- df_orig %>% 
-  janitor::clean_names() %>% 
-  mutate(ticker = tickers, 
-         catalyst_date = dates_catalyst,
-         description = description_catalyst) %>% 
-  mutate(exact_catalyst_date = lubridate::mdy(catalyst_date)) %>% 
-  relocate(ticker, stage, catalyst_date, exact_catalyst_date, last_updated, insider_holding = insider_holding_percent,
-           estimated_primary_completion_date = est_epcd, description, drug) %>% 
-  select(-price, -catalyst, -open, -previous_close) 
+## Compare with previous data ---------------------------------------
+
+days_back <- 4
+
+df_previous <- Get_FDA_Calendar(date %>% magrittr::add(days(-days_back)))
+
+# Registros que han aparecido
+anti_join(df, df_previous, by = c("ticker", "catalyst_date")) %>%
+  select(ticker, stage, exact_catalyst_date, catalyst_date, 
+         days_to_catalyst, last_updated, market_cap_mill) %>% 
+  # filter(market_cap_mill <= 5000) %>%
+  I() %>% 
+  head(20)
 
 
-View(df)
-
-
-df_previous <- df
-
-anti_join(
-  df %>% select(ticker, catalyst_date, last_updated),
-  df_previous %>% select(ticker, catalyst_date, last_updated),
-  by = c("ticker", "catalyst_date")
-)
-
-
+# Registros que han desaparecido
+anti_join(df_previous, df, by = c("ticker", "catalyst_date")) %>%
+  select(ticker, stage, exact_catalyst_date, catalyst_date, 
+         days_to_catalyst, last_updated, market_cap_mill) %>% 
+  # filter(market_cap_mill <= 5000) %>%
+  I() %>% 
+  head(20)
 
