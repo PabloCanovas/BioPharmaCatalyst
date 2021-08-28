@@ -1,18 +1,36 @@
-Get_FDA_Calendar <- function(date){
+Get_FDA_Calendar <- function(date, mode = "daily"){
   
-  if(!is.Date(date)) date <- date %>% ymd() 
+  # Mode daily o historical
+  
+  if(!is.Date(date)) date <- ymd(date) 
   
   date <- date %>% format("%Y%m%d")
   
-  fda_calendar <- read_html(glue("~/RWork/Trading/BioPharmaCatalyst/HTMLs/{date}_FDA Calendar of Biotech Stock Catalysts • BioPharmCatalyst.html")) 
+  ## Read file ------------------------------------
+  
+  file <- list.files("~/RWork/Trading/BioPharmaCatalyst/HTMLs/") %>% 
+    keep(~ str_detect(.x, ".html")) %>% 
+    keep(~ str_detect(.x, date))
+  
+  if(mode == "daily"){
+    
+    file <- file %>% keep(~ str_detect(.x, "_FDA"))
+    
+  } else if(mode == "historical"){
+    file <- file %>% keep(~ str_detect(.x, "_Hist"))
+  }
+  
+  fda_calendar <- read_html(glue("HTMLs/{file}"))
+  
+  xpath <- '//*[@id="modern-screener-container"]/div/form/div[2]/div[2]/table'
   
   headers <- fda_calendar %>% 
-    html_element(xpath = '//*[@id="modern-screener-container"]/div/form/div[2]/div[2]/table/thead') %>% 
+    html_element(xpath = glue('{xpath}/thead')) %>% 
     html_table() %>% 
     names()
   
   df_orig <- fda_calendar %>% 
-    html_element(xpath = '//*[@id="modern-screener-container"]/div/form/div[2]/div[2]/table/tbody') %>% 
+    html_element(xpath = glue('{xpath}/tbody')) %>% 
     html_table() %>%
     set_names(headers) 
   
@@ -24,6 +42,26 @@ Get_FDA_Calendar <- function(date){
   catalysts <- df_orig$Catalyst %>% str_split(pattern = "               ", simplify = T) 
   dates_catalyst <- catalysts[,1] %>% str_replace("\n", "")
   description_catalyst <- catalysts[,2]
+  
+  
+  ## Clean historic calendar ------------------------------------
+  
+  if(mode == "historical"){
+    fda_hist <- df_orig %>% 
+      janitor::clean_names() %>% 
+      mutate(ticker = tickers, 
+             catalyst_date = lubridate::mdy(dates_catalyst),
+             description = description_catalyst) %>% 
+      relocate(ticker, stage, catalyst_date, description, drug) %>% 
+      select(-catalyst) %>% 
+      arrange(desc(catalyst_date))
+    
+    return(fda_hist)
+  }
+  
+  
+  ## Clean actual calendar ------------------------------------
+  
   
   df <- df_orig %>% 
     janitor::clean_names() %>% 

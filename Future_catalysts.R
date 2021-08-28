@@ -18,12 +18,12 @@ df <- Get_FDA_Calendar(date)
 
 df %>% filter(last_updated == max(last_updated))
 
-df %>% filter(days_to_catalyst <= 25, market_cap_mill <= 2000) %>% V
+df %>% filter(days_to_catalyst <= 25, market_cap_mill <= 1000) 
 
 
 ## Compare with previous data ---------------------------------------
 
-days_back <- 4
+days_back <- 1
 
 df_previous <- Get_FDA_Calendar(date %>% magrittr::add(days(-days_back)))
 
@@ -45,3 +45,10 @@ anti_join(df_previous, df, by = c("ticker", "catalyst_date")) %>%
   head(20)
 
  
+## Historic calendar  -------------------------------------------
+
+
+fda_hist <- Get_FDA_Calendar(date, "historical")
+
+
+

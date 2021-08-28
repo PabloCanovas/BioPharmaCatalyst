@@ -55,7 +55,7 @@ fda_hist <- hist_orig %>%
          description = description_catalyst) %>% 
   relocate(ticker, stage, catalyst_date, description, drug) %>% 
   select(-catalyst) %>% 
-  arrange(catalyst_date)
+  arrange(desc(catalyst_date))
 
 rm(catalysts, dates_catalyst, description_catalyst)
 
